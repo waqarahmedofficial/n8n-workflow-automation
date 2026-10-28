@@ -1,0 +1,12 @@
+DELTA FREIGHT SERVICES
+Invoice
+
+Invoice Number: DF-55213
+Invoice Date: 2026-10-08
+Vendor: Delta Freight Services
+
+Description: Pallet shipment Karachi -> Dubai
+Charges: 875.25
+Fuel surcharge: 43.75
+
+Grand Total: $919.00

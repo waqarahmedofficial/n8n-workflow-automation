@@ -1,0 +1,13 @@
+ACME OFFICE SUPPLIES LTD
+Tax Invoice
+
+Invoice Number: INV-2026-0041
+Invoice Date: 2026-09-03
+Vendor: Acme Office Supplies Ltd
+
+Description: Printer paper, toner cartridges, folders
+Subtotal: 412.50
+Tax: 37.50
+
+Total Due: $450.00
+Payment terms: Net 30

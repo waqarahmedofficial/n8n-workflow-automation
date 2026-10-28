@@ -1,0 +1,11 @@
+HARBOR PRINT WORKS
+Invoice
+
+Invoice No: (not printed on this copy)
+Date: 32/13/2026
+Vendor: Harbor Print Works
+
+Description: Business cards x500
+Total: $210.00
+
+(This copy has no usable invoice number and a garbled date - deliberate test case for the exceptions path.)

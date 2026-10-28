@@ -1,0 +1,11 @@
+STUDIO NORR AB
+Invoice
+
+Invoice Number: SN-2026-118
+Invoice Date: 2026-10-01
+Vendor: Studio Norr AB
+
+Description: Brand illustration package
+Amount: EUR 2,400.00
+
+Total Due: EUR 2,400.00

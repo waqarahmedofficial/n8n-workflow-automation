@@ -1,0 +1,11 @@
+GREENLEAF CATERING CO
+Invoice
+
+Invoice Number: GL-3092
+Invoice Date: 2026-10-12
+Vendor: Greenleaf Catering Co
+
+Description: Office lunch catering, 40 covers
+Price on request - final amount to be confirmed by phone.
+
+(This copy is missing the total - deliberate test case for the exceptions path.)
