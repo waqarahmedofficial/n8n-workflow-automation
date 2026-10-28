@@ -1,0 +1,150 @@
+{
+  "id": "5",
+  "finished": true,
+  "mode": "webhook",
+  "retryOf": null,
+  "retrySuccessId": null,
+  "status": "success",
+  "createdAt": "2026-10-24T11:57:15.322Z",
+  "startedAt": "2026-10-24T11:57:15.482Z",
+  "stoppedAt": "2026-10-24T11:57:15.554Z",
+  "deletedAt": null,
+  "workflowId": "WJiNWyWPk8wZiT3H",
+  "waitTill": null,
+  "data": "[{\"startData\":\"1\",\"resultData\":\"2\",\"executionData\":\"3\"},{},{\"runData\":\"4\",\"lastNodeExecuted\":\"5\"},{\"contextData\":\"6\",\"nodeExecutionStack\":\"7\",\"waitingExecution\":\"8\"},{\"Orders Webhook\":\"9\",\"1. Config\":\"10\",\"2. Parse and Filter - FIXED\":\"11\",\"3. Run Summary\":\"12\"},\"3. Run Summary\",{},[],{},[\"13\"],[\"14\"],[\"15\"],[\"16\"],{\"startTime\":1792843035531,\"executionIndex\":0,\"source\":\"17\",\"hints\":\"18\",\"executionTime\":1,\"executionStatus\":\"19\",\"data\":\"20\"},{\"startTime\":1792843035532,\"executionIndex\":1,\"source\":\"21\",\"hints\":\"22\",\"executionTime\":6,\"executionStatus\":\"19\",\"data\":\"23\"},{\"startTime\":1792843035538,\"executionIndex\":2,\"source\":\"24\",\"hints\":\"25\",\"executionTime\":9,\"executionStatus\":\"19\",\"data\":\"26\"},{\"startTime\":1792843035547,\"executionIndex\":3,\"source\":\"27\",\"hints\":\"28\",\"executionTime\":6,\"executionStatus\":\"19\",\"data\":\"29\"},[],[],\"success\",{\"main\":\"30\"},[\"31\"],[\"32\"],{\"main\":\"33\"},[\"34\"],[\"35\"],{\"main\":\"36\"},[\"37\"],[\"38\"],{\"main\":\"39\"},[\"40\"],{\"previousNode\":\"41\"},{\"message\":\"42\",\"location\":\"43\"},[\"44\"],{\"previousNode\":\"45\"},{\"message\":\"42\",\"location\":\"43\"},[\"46\"],{\"previousNode\":\"47\"},{\"message\":\"42\",\"location\":\"43\"},[\"48\"],[\"49\"],\"Orders Webhook\",\"To make sure expressions after this node work, return the input items that produced each output item. <a target=\\\"_blank\\\" href=\\\"https://docs.n8n.io/data/data-mapping/data-item-linking/item-linking-code-node/\\\">More info</a>\",\"outputPane\",[\"50\"],\"1. Config\",[\"51\",\"52\",\"53\"],\"2. Parse and Filter - FIXED\",[\"54\"],{\"json\":\"55\",\"pairedItem\":\"56\"},{\"json\":\"57\",\"pairedItem\":\"58\"},{\"json\":\"59\",\"pairedItem\":\"60\"},{\"json\":\"61\",\"pairedItem\":\"62\"},{\"json\":\"63\",\"pairedItem\":\"64\"},{\"json\":\"65\"},{\"headers\":\"66\",\"params\":\"67\",\"query\":\"68\",\"body\":\"69\",\"webhookUrl\":\"70\",\"executionMode\":\"71\"},{\"item\":0},{\"config\":\"72\"},{\"item\":0},{\"amount\":150,\"orderDate\":\"73\",\"orderId\":\"74\",\"dateValid\":true},{\"item\":0},{\"amount\":200,\"orderDate\":\"75\",\"orderId\":\"76\",\"dateValid\":true},{\"item\":0},{\"amount\":320,\"orderDate\":\"77\",\"orderId\":\"78\",\"dateValid\":true},{\"item\":0},{\"keptCount\":3,\"keptIds\":\"79\"},{\"accept-encoding\":\"80\",\"content-length\":\"81\",\"host\":\"82\",\"user-agent\":\"83\",\"content-type\":\"84\",\"connection\":\"85\"},{},{},{\"orders\":\"86\",\"rule\":\"87\"},\"http://localhost:5678/webhook/orders-fixed\",\"production\",{\"minAmount\":100},\"2026-10-02\",\"ORD-1001\",\"2026-10-09\",\"ORD-1003\",\"2026-10-15\",\"ORD-1005\",[\"74\",\"76\",\"78\"],\"identity\",\"538\",\"127.0.0.1:5678\",\"Python-urllib/3.12\",\"application/json\",\"close\",[\"88\",\"89\",\"90\",\"91\",\"92\",\"93\"],\"Keep orders with amount >= 100 and a valid parsed order date. Expected kept: ORD-1001, ORD-1003, ORD-1005 (3 of 6).\",{\"amount\":150,\"orderDate\":\"73\",\"orderId\":\"74\"},{\"amount\":75,\"orderDate\":\"94\",\"orderId\":\"95\"},{\"amount\":200,\"orderDate\":\"75\",\"orderId\":\"76\"},{\"amount\":40,\"orderDate\":\"96\",\"orderId\":\"97\"},{\"amount\":320,\"orderDate\":\"77\",\"orderId\":\"78\"},{\"amount\":99,\"orderDate\":\"98\",\"orderId\":\"99\"},\"2026-10-05\",\"ORD-1002\",\"2026-10-11\",\"ORD-1004\",\"2026-10-20\",\"ORD-1006\"]",
+  "workflowData": {
+    "id": "WJiNWyWPk8wZiT3H",
+    "name": "SAMPLE - Order Filter FIXED",
+    "active": true,
+    "isArchived": false,
+    "createdAt": "2026-10-24T11:57:09.521Z",
+    "updatedAt": "2026-10-24T11:57:09.000Z",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## RESCUE DEMO \u2014 fixed\nSame workflow after the fix: ISO date parsing with a real calendar check, and the amount rule restored to >= threshold. Evidence: `evidence/exec-rescue-fixed.json`.",
+          "height": 200,
+          "width": 620,
+          "color": 4
+        },
+        "id": "d4a83d17-0927-4de2-b1ca-c4cd45479ac5",
+        "name": "Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          40,
+          40
+        ]
+      },
+      {
+        "parameters": {
+          "multipleMethods": false,
+          "httpMethod": "POST",
+          "path": "orders-fixed",
+          "authentication": "none",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        },
+        "id": "0f4d92ea-e2b9-4dcd-afcc-8a8df288be54",
+        "name": "Orders Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "61b7d7ca-77dd-4208-81ff-1dbd8ade2181"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// CONFIG - the only place the business rule lives. Buyer edits here.\nreturn [{ json: { config: { minAmount: 100 } } }];",
+          "notice": ""
+        },
+        "id": "6bda1db6-0af7-42b6-982f-48ff79eea75b",
+        "name": "1. Config",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// ============================================================\n// FIXED LOGIC (changes vs the as-received version):\n// 1. Dates are parsed as ISO 8601 (YYYY-MM-DD) - the format the\n//    client's system actually sends - with a real calendar check.\n// 2. The amount rule keeps orders AT OR ABOVE the threshold\n//    (amount >= minAmount), as the business rule requires.\n// ============================================================\nconst cfg = $('1. Config').first().json.config;\nconst orders = ($('Orders Webhook').first().json.body || {}).orders || [];\nconst kept = [];\nfor (const o of orders) {\n  const m = String(o.orderDate || '').match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  let dateValid = false;\n  if (m) {\n    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));\n    dateValid = !isNaN(d) && d.getUTCFullYear() === +m[1] && d.getUTCMonth() + 1 === +m[2] && d.getUTCDate() === +m[3];\n  }\n  if (dateValid && o.amount >= cfg.minAmount) kept.push({ json: Object.assign({}, o, { dateValid: true }) });\n}\nreturn kept;",
+          "notice": ""
+        },
+        "id": "1fbd8154-9d57-4b53-aa5d-2044ec94be4a",
+        "name": "2. Parse and Filter - FIXED",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nreturn [{ json: { keptCount: items.length, keptIds: items.map(i => i.json.orderId) } }];",
+          "notice": ""
+        },
+        "id": "f22240a6-371e-4a01-9943-31a79ab257b6",
+        "name": "3. Run Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Orders Webhook": {
+        "main": [
+          [
+            {
+              "node": "1. Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1. Config": {
+        "main": [
+          [
+            {
+              "node": "2. Parse and Filter - FIXED",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2. Parse and Filter - FIXED": {
+        "main": [
+          [
+            {
+              "node": "3. Run Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": {},
+    "pinData": null
+  },
+  "customData": {}
+}

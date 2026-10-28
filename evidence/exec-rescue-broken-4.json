@@ -1,0 +1,150 @@
+{
+  "id": "4",
+  "finished": true,
+  "mode": "webhook",
+  "retryOf": null,
+  "retrySuccessId": null,
+  "status": "success",
+  "createdAt": "2026-10-24T11:57:14.798Z",
+  "startedAt": "2026-10-24T11:57:15.035Z",
+  "stoppedAt": "2026-10-24T11:57:15.116Z",
+  "deletedAt": null,
+  "workflowId": "h1earOT1bTMHVfTB",
+  "waitTill": null,
+  "data": "[{\"startData\":\"1\",\"resultData\":\"2\",\"executionData\":\"3\"},{},{\"runData\":\"4\",\"lastNodeExecuted\":\"5\"},{\"contextData\":\"6\",\"nodeExecutionStack\":\"7\",\"waitingExecution\":\"8\"},{\"Orders Webhook\":\"9\",\"1. Config\":\"10\",\"2. Parse and Filter - FAULTY\":\"11\"},\"2. Parse and Filter - FAULTY\",{},[],{},[\"12\"],[\"13\"],[\"14\"],{\"startTime\":1792843035093,\"executionIndex\":0,\"source\":\"15\",\"hints\":\"16\",\"executionTime\":0,\"executionStatus\":\"17\",\"data\":\"18\"},{\"startTime\":1792843035093,\"executionIndex\":1,\"source\":\"19\",\"hints\":\"20\",\"executionTime\":9,\"executionStatus\":\"17\",\"data\":\"21\"},{\"startTime\":1792843035103,\"executionIndex\":2,\"source\":\"22\",\"hints\":\"23\",\"executionTime\":11,\"executionStatus\":\"17\",\"data\":\"24\"},[],[],\"success\",{\"main\":\"25\"},[\"26\"],[\"27\"],{\"main\":\"28\"},[\"29\"],[\"30\"],{\"main\":\"31\"},[\"32\"],{\"previousNode\":\"33\"},{\"message\":\"34\",\"location\":\"35\"},[\"36\"],{\"previousNode\":\"37\"},{\"message\":\"34\",\"location\":\"35\"},[\"38\"],[\"39\"],\"Orders Webhook\",\"To make sure expressions after this node work, return the input items that produced each output item. <a target=\\\"_blank\\\" href=\\\"https://docs.n8n.io/data/data-mapping/data-item-linking/item-linking-code-node/\\\">More info</a>\",\"outputPane\",[\"40\"],\"1. Config\",[],{\"json\":\"41\",\"pairedItem\":\"42\"},{\"json\":\"43\",\"pairedItem\":\"44\"},{\"headers\":\"45\",\"params\":\"46\",\"query\":\"47\",\"body\":\"48\",\"webhookUrl\":\"49\",\"executionMode\":\"50\"},{\"item\":0},{\"config\":\"51\"},{\"item\":0},{\"accept-encoding\":\"52\",\"content-length\":\"53\",\"host\":\"54\",\"user-agent\":\"55\",\"content-type\":\"56\",\"connection\":\"57\"},{},{},{\"orders\":\"58\",\"rule\":\"59\"},\"http://localhost:5678/webhook/orders-broken\",\"production\",{\"minAmount\":100},\"identity\",\"538\",\"127.0.0.1:5678\",\"Python-urllib/3.12\",\"application/json\",\"close\",[\"60\",\"61\",\"62\",\"63\",\"64\",\"65\"],\"Keep orders with amount >= 100 and a valid parsed order date. Expected kept: ORD-1001, ORD-1003, ORD-1005 (3 of 6).\",{\"amount\":150,\"orderDate\":\"66\",\"orderId\":\"67\"},{\"amount\":75,\"orderDate\":\"68\",\"orderId\":\"69\"},{\"amount\":200,\"orderDate\":\"70\",\"orderId\":\"71\"},{\"amount\":40,\"orderDate\":\"72\",\"orderId\":\"73\"},{\"amount\":320,\"orderDate\":\"74\",\"orderId\":\"75\"},{\"amount\":99,\"orderDate\":\"76\",\"orderId\":\"77\"},\"2026-10-02\",\"ORD-1001\",\"2026-10-05\",\"ORD-1002\",\"2026-10-09\",\"ORD-1003\",\"2026-10-11\",\"ORD-1004\",\"2026-10-15\",\"ORD-1005\",\"2026-10-20\",\"ORD-1006\"]",
+  "workflowData": {
+    "id": "h1earOT1bTMHVfTB",
+    "name": "SAMPLE - Order Filter AS RECEIVED (broken)",
+    "active": true,
+    "isArchived": false,
+    "createdAt": "2026-10-24T11:57:08.969Z",
+    "updatedAt": "2026-10-24T11:57:09.000Z",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## RESCUE DEMO \u2014 as-received (broken)\nThis is the client's workflow as handed over. It runs without errors and silently drops every valid order: wrong date-format assumption (MM/DD/YYYY vs ISO) + an inverted amount rule. Evidence: `evidence/exec-rescue-broken.json`.",
+          "height": 200,
+          "width": 620,
+          "color": 4
+        },
+        "id": "4686b38a-4e5e-45b4-9a14-91337c01edee",
+        "name": "Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          40,
+          40
+        ]
+      },
+      {
+        "parameters": {
+          "multipleMethods": false,
+          "httpMethod": "POST",
+          "path": "orders-broken",
+          "authentication": "none",
+          "responseMode": "lastNode",
+          "responseData": "firstEntryJson",
+          "options": {}
+        },
+        "id": "5c84fadd-18c2-4db3-936a-2168dd082909",
+        "name": "Orders Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "ec9a9c0e-d223-4c63-85bf-710d037ae271"
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// CONFIG - the only place the business rule lives. Buyer edits here.\nreturn [{ json: { config: { minAmount: 100 } } }];",
+          "notice": ""
+        },
+        "id": "aff55e5a-1e91-4942-9128-7ad9d81cea4b",
+        "name": "1. Config",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// ============================================================\n// AS-RECEIVED LOGIC - kept deliberately faulty for the rescue demo.\n// FAULT 1 (date format): assumes dates arrive as MM/DD/YYYY and splits\n//   on '/'. The client's system actually sends ISO dates (YYYY-MM-DD),\n//   which contain no '/', so EVERY date fails validation.\n// FAULT 2 (inverted rule): keeps orders BELOW the threshold\n//   (amount < minAmount) instead of at-or-above it.\n// Result: the workflow runs 'successfully' and silently drops every\n// valid record. See the fixed version for the corrected logic.\n// ============================================================\nconst cfg = $('1. Config').first().json.config;\nconst orders = ($('Orders Webhook').first().json.body || {}).orders || [];\nconst kept = [];\nfor (const o of orders) {\n  const parts = String(o.orderDate || '').split('/');\n  const month = parseInt(parts[0], 10), day = parseInt(parts[1], 10), year = parseInt(parts[2], 10);\n  const d = new Date(year, month - 1, day);\n  const dateValid = parts.length === 3 && !isNaN(d) && d.getDate() === day && d.getMonth() === month - 1;\n  if (dateValid && o.amount < cfg.minAmount) kept.push({ json: o });\n}\nreturn kept;",
+          "notice": ""
+        },
+        "id": "2f836930-d62e-4581-8491-210541495140",
+        "name": "2. Parse and Filter - FAULTY",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nreturn [{ json: { keptCount: items.length, keptIds: items.map(i => i.json.orderId) } }];",
+          "notice": ""
+        },
+        "id": "93fb3097-98f5-49dd-a392-df88ead77204",
+        "name": "3. Run Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Orders Webhook": {
+        "main": [
+          [
+            {
+              "node": "1. Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1. Config": {
+        "main": [
+          [
+            {
+              "node": "2. Parse and Filter - FAULTY",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2. Parse and Filter - FAULTY": {
+        "main": [
+          [
+            {
+              "node": "3. Run Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": {},
+    "pinData": null
+  },
+  "customData": {}
+}

@@ -1,0 +1,4 @@
+﻿file,invoiceNumber,date,vendor,total,currency,status,issues
+invoice-05-greenleaf-MISSING-TOTAL.txt,GL-3092,2026-10-12,Greenleaf Catering Co,,,exception,Missing total amount
+invoice-06-harborprint-MISSING-NUMBER.txt,,,Harbor Print Works,210.00,$,exception,Missing invoice number; Missing or invalid invoice date
+invoice-07-corrupted.bin.txt,,,,,,exception,Unreadable/corrupted file content - no fields could be extracted

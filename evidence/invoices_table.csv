@@ -1,0 +1,5 @@
+﻿file,invoiceNumber,date,vendor,total,currency,status,issues
+invoice-01-acme.txt,INV-2026-0041,2026-09-03,Acme Office Supplies Ltd,450.00,$,ok,
+invoice-02-bluepeak.txt,BP-88410,2026-09-14,BluePeak Hosting Inc,"1,280.99",$,ok,
+invoice-03-studionorr.txt,SN-2026-118,2026-10-01,Studio Norr AB,"2,400.00",EUR,ok,
+invoice-04-deltafreight.txt,DF-55213,2026-10-08,Delta Freight Services,919.00,$,ok,
