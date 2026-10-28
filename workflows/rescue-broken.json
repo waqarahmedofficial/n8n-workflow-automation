@@ -1,0 +1,117 @@
+{
+  "name": "SAMPLE - Order Filter AS RECEIVED (broken)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RESCUE DEMO \u2014 as-received (broken)\nThis is the client's workflow as handed over. It runs without errors and silently drops every valid order: wrong date-format assumption (MM/DD/YYYY vs ISO) + an inverted amount rule. Evidence: `evidence/exec-rescue-broken.json`.",
+        "height": 200,
+        "width": 620,
+        "color": 4
+      },
+      "id": "4686b38a-4e5e-45b4-9a14-91337c01edee",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orders-broken",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "5c84fadd-18c2-4db3-936a-2168dd082909",
+      "name": "Orders Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "ec9a9c0e-d223-4c63-85bf-710d037ae271"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONFIG - the only place the business rule lives. Buyer edits here.\nreturn [{ json: { config: { minAmount: 100 } } }];"
+      },
+      "id": "aff55e5a-1e91-4942-9128-7ad9d81cea4b",
+      "name": "1. Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// AS-RECEIVED LOGIC - kept deliberately faulty for the rescue demo.\n// FAULT 1 (date format): assumes dates arrive as MM/DD/YYYY and splits\n//   on '/'. The client's system actually sends ISO dates (YYYY-MM-DD),\n//   which contain no '/', so EVERY date fails validation.\n// FAULT 2 (inverted rule): keeps orders BELOW the threshold\n//   (amount < minAmount) instead of at-or-above it.\n// Result: the workflow runs 'successfully' and silently drops every\n// valid record. See the fixed version for the corrected logic.\n// ============================================================\nconst cfg = $('1. Config').first().json.config;\nconst orders = ($('Orders Webhook').first().json.body || {}).orders || [];\nconst kept = [];\nfor (const o of orders) {\n  const parts = String(o.orderDate || '').split('/');\n  const month = parseInt(parts[0], 10), day = parseInt(parts[1], 10), year = parseInt(parts[2], 10);\n  const d = new Date(year, month - 1, day);\n  const dateValid = parts.length === 3 && !isNaN(d) && d.getDate() === day && d.getMonth() === month - 1;\n  if (dateValid && o.amount < cfg.minAmount) kept.push({ json: o });\n}\nreturn kept;"
+      },
+      "id": "2f836930-d62e-4581-8491-210541495140",
+      "name": "2. Parse and Filter - FAULTY",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{ json: { keptCount: items.length, keptIds: items.map(i => i.json.orderId) } }];"
+      },
+      "id": "93fb3097-98f5-49dd-a392-df88ead77204",
+      "name": "3. Run Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Orders Webhook": {
+      "main": [
+        [
+          {
+            "node": "1. Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Config": {
+      "main": [
+        [
+          {
+            "node": "2. Parse and Filter - FAULTY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Parse and Filter - FAULTY": {
+      "main": [
+        [
+          {
+            "node": "3. Run Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+}

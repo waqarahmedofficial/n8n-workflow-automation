@@ -1,0 +1,208 @@
+{
+  "name": "SAMPLE - Lead Intake (Dedupe to Table + Notify)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Lead Intake \u2014 sample build\n**Config step first:** all environment values (notify URL, file path) live in `1. Config` only.\n**Rate-limit design:** one summary notification per run \u2014 never one call per lead.\n**Stand-ins in this sample:** workflow memory + CSV snapshot = the buyer's Sheet/CRM; local echo endpoint = Slack/email.",
+        "height": 220,
+        "width": 620,
+        "color": 4
+      },
+      "id": "cf0c1b4c-8de6-4d36-bae0-2adefabb5115",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "6522c183-f865-481c-a2db-f843804c1ae8",
+      "name": "Lead Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "bfba2233-5fca-4458-9ad8-8b185293f1f2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CONFIG - the ONLY place environment values live in this workflow.\n// On import, the buyer replaces these values with their own.\n// No other node hardcodes a URL, path or threshold.\n// ============================================================\nreturn [{\n  json: {\n    config: {\n      // SAMPLE STAND-IN: local echo endpoint that logs notifications.\n      // Buyer supplies their real Slack / Teams / email webhook URL.\n      notifyUrl: 'http://127.0.0.1:9999/notify',\n      // SAMPLE STAND-IN store: workflow memory + the CSV snapshot below\n      // stand in for the buyer's Google Sheet / CRM table.\n      tableName: 'leads_table',\n      snapshotPath: '/home/hatch/workspace/automation-builds-sample/evidence/leads_table_snapshot.csv',\n      dedupeKey: 'email'\n    }\n  }\n}];"
+      },
+      "id": "33c46a8e-3e42-4fc9-868e-63555e4dd0ec",
+      "name": "1. Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Dedupe the incoming batch against the stored table and inside the\n// batch itself. Key = email, case-insensitive. The table lives in\n// workflow static data (the sample's stand-in for a Sheet/CRM table).\nconst body = $('Lead Form Webhook').first().json.body || {};\nconst incoming = Array.isArray(body.leads) ? body.leads : (body.email ? [body] : []);\n\nconst table = $getWorkflowStaticData('global');\nif (!Array.isArray(table.leads)) table.leads = [];\n\nconst seen = new Set(table.leads.map(r => String(r.email || '').trim().toLowerCase()));\nconst added = [];\nlet duplicates = 0;\nfor (const lead of incoming) {\n  const key = String(lead.email || '').trim().toLowerCase();\n  if (!key || seen.has(key)) { duplicates++; continue; }\n  seen.add(key);\n  const row = {\n    company: lead.company || '',\n    name: lead.name || '',\n    email: lead.email,\n    source: lead.source || '',\n    addedAt: new Date().toISOString()\n  };\n  table.leads.push(row);\n  added.push(row);\n}\nreturn [{\n  json: {\n    received: incoming.length,\n    added: added.length,\n    duplicatesSkipped: duplicates,\n    totalInTable: table.leads.length,\n    addedEmails: added.map(r => r.email),\n    table: table.leads\n  }\n}];"
+      },
+      "id": "a1dc2f02-687d-4b84-9861-5962e9d4727a",
+      "name": "2. Dedupe and Append",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Emit the full table as items so the next step can write it as CSV.\nconst table = $('2. Dedupe and Append').first().json.table || [];\nreturn table.map(r => ({ json: r }));"
+      },
+      "id": "07788361-c02f-46af-a6d5-e7fd8f8a0c75",
+      "name": "3. Table Rows for Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "options": {
+          "fileName": "leads_table_snapshot",
+          "delimiter": ",",
+          "headerRow": true
+        }
+      },
+      "id": "c2a29321-0806-4efa-8426-deb230c986ce",
+      "name": "4. Snapshot to CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('1. Config').first().json.config.snapshotPath }}",
+        "dataPropertyName": "data",
+        "options": {
+          "append": false
+        }
+      },
+      "id": "ef962f2e-46c6-4ef7-a39c-f5b576736f68",
+      "name": "5. Write Snapshot CSV",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('1. Config').first().json.config.notifyUrl }}",
+        "authentication": "none",
+        "contentType": "json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'lead-intake-run', received: $('2. Dedupe and Append').first().json.received, added: $('2. Dedupe and Append').first().json.added, duplicatesSkipped: $('2. Dedupe and Append').first().json.duplicatesSkipped, totalInTable: $('2. Dedupe and Append').first().json.totalInTable }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "a081c577-388b-49e3-95e3-ad567edbc7fd",
+      "name": "6. Notify (stand-in)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "1. Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Config": {
+      "main": [
+        [
+          {
+            "node": "2. Dedupe and Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Dedupe and Append": {
+      "main": [
+        [
+          {
+            "node": "3. Table Rows for Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Table Rows for Snapshot": {
+      "main": [
+        [
+          {
+            "node": "4. Snapshot to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Snapshot to CSV": {
+      "main": [
+        [
+          {
+            "node": "5. Write Snapshot CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Write Snapshot CSV": {
+      "main": [
+        [
+          {
+            "node": "6. Notify (stand-in)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+}

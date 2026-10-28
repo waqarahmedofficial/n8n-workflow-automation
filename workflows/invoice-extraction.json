@@ -1,0 +1,274 @@
+{
+  "name": "SAMPLE - Invoice Extraction (Table + Exceptions)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Invoice Extraction \u2014 sample build\n**Config step first:** folder + output paths live in `1. Config` only.\n**Exception routing:** every file ends as `ok` (table) or `exception` (flagged file + named issue). A corrupted file is flagged, never crashes the run.\n**Batch guard:** `maxFilesPerRun` in Config caps one run; overflow waits for the next run instead of flooding APIs.",
+        "height": 230,
+        "width": 640,
+        "color": 4
+      },
+      "id": "53532b62-25fe-4294-bce7-b494f42b2991",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-batch",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "38601377-8925-40f9-8a29-0a876d5c9e6c",
+      "name": "Invoice Batch Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "07579ba6-18a8-4f98-876a-202e0f0e700a"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CONFIG - the ONLY place environment values live in this workflow.\n// On import, the buyer replaces these values with their own.\n// ============================================================\nreturn [{\n  json: {\n    config: {\n      // Folder the buyer drops invoice files into (sample: local test data).\n      invoiceFolder: '/home/hatch/workspace/automation-builds-sample/test-data/invoices',\n      tablePath: '/home/hatch/workspace/automation-builds-sample/evidence/invoices_table.csv',\n      exceptionsPath: '/home/hatch/workspace/automation-builds-sample/evidence/invoice_exceptions.csv',\n      // Batch guard: a single run reads at most this many files, so a huge\n      // drop folder cannot flood downstream APIs. Overflow waits for the\n      // next scheduled run (see runbook, rate limits).\n      maxFilesPerRun: 500\n    }\n  }\n}];"
+      },
+      "id": "8f6173d8-c896-4c2e-8a91-c51a1cff3424",
+      "name": "1. Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "={{ 'cd \"' + $('1. Config').first().json.config.invoiceFolder + '\" && n=0; for f in *.txt; do n=$((n+1)); if [ $n -gt 500 ]; then break; fi; echo \"@@FILE:$f\"; base64 -w0 \"$f\"; echo; done' }}",
+        "executeOnce": true
+      },
+      "id": "5239869c-995b-4d09-83e9-9a794a357037",
+      "name": "2. Read Invoice Files",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse every invoice file read in step 2. Files arrive base64-encoded so\n// binary/corrupted content survives transport and can be DETECTED here\n// instead of crashing the run. Every file produces exactly one item:\n// status 'ok' with all fields, or status 'exception' with named issues.\nconst stdout = $input.first().json.stdout || '';\nconst chunks = stdout.split('@@FILE:').map(s => s.trim()).filter(Boolean);\nconst results = [];\nfor (const chunk of chunks) {\n  const nl = chunk.indexOf('\\n');\n  const file = chunk.slice(0, nl).trim();\n  const b64 = chunk.slice(nl + 1).replace(/\\s+/g, '');\n  let text = '';\n  try { text = Buffer.from(b64, 'base64').toString('utf8'); } catch (e) { text = ''; }\n  const badChars = (text.match(/[\\uFFFD\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g) || []).length;\n  const unreadable = text.length === 0 || (badChars / Math.max(text.length, 1)) > 0.02;\n\n  const issues = [];\n  let invoiceNumber = '', date = '', vendor = '', total = '', currency = '';\n  if (unreadable) {\n    issues.push('Unreadable/corrupted file content - no fields could be extracted');\n  } else {\n    const lineVal = (re) => { const m = text.match(re); return m ? m[1].trim() : ''; };\n    invoiceNumber = lineVal(/^\\s*Invoice\\s*(?:Number|No)[:.]?\\s*(.+)$/im);\n    if (/^\\(|not printed/i.test(invoiceNumber)) invoiceNumber = '';\n    date = lineVal(/^\\s*(?:Invoice\\s*)?Date[:.]?\\s*(.+)$/im);\n    const dm = date.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n    if (dm) {\n      const d = new Date(dm[0] + 'T00:00:00Z');\n      if (isNaN(d) || d.getUTCMonth() + 1 !== +dm[2] || d.getUTCDate() !== +dm[3]) date = '';\n      else date = dm[0];\n    } else date = '';\n    vendor = lineVal(/^\\s*Vendor[:.]?\\s*(.+)$/im);\n    const tm = text.match(/^\\s*(Total Due|Grand Total|Total)[:.]?\\s*(.+)$/im);\n    if (tm) {\n      const am = tm[2].match(/([A-Z]{3}|\\$|\\u20AC|\\u00A3)?\\s*([\\d,]+\\.\\d{2})/);\n      if (am) { currency = am[1] || ''; total = am[2]; }\n    }\n    if (!invoiceNumber) issues.push('Missing invoice number');\n    if (!date) issues.push('Missing or invalid invoice date');\n    if (!vendor) issues.push('Missing vendor');\n    if (!total) issues.push('Missing total amount');\n  }\n  results.push({ json: {\n    file: file, invoiceNumber: invoiceNumber, date: date, vendor: vendor,\n    total: total, currency: currency,\n    status: issues.length === 0 ? 'ok' : 'exception',\n    issues: issues.join('; ')\n  }});\n}\nreturn results;"
+      },
+      "id": "eee7d47c-7748-4e1a-94c5-ac4c508f307e",
+      "name": "3. Parse Invoices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "535e9557-535b-4fe3-8a45-175d89fdca4b",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ad9e6e73-95fc-4696-9351-01f0182afedb",
+      "name": "4. Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "options": {
+          "fileName": "invoices_table",
+          "delimiter": ",",
+          "headerRow": true
+        }
+      },
+      "id": "cb2c2747-fecf-4561-b058-2601ae0159f5",
+      "name": "5a. Rows to CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('1. Config').first().json.config.tablePath }}",
+        "dataPropertyName": "data",
+        "options": {
+          "append": false
+        }
+      },
+      "id": "0f1fb985-128f-4845-98b9-a8edd3b619ee",
+      "name": "6a. Write Table CSV",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "options": {
+          "fileName": "invoice_exceptions",
+          "delimiter": ",",
+          "headerRow": true
+        }
+      },
+      "id": "6f341ccd-176f-44be-83d3-f36f57213cc7",
+      "name": "5b. Exceptions to CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "={{ $('1. Config').first().json.config.exceptionsPath }}",
+        "dataPropertyName": "data",
+        "options": {
+          "append": false
+        }
+      },
+      "id": "0a85fe93-0049-4eff-abe7-0a0e80d8e707",
+      "name": "6b. Write Exceptions CSV",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Invoice Batch Webhook": {
+      "main": [
+        [
+          {
+            "node": "1. Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Config": {
+      "main": [
+        [
+          {
+            "node": "2. Read Invoice Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Read Invoice Files": {
+      "main": [
+        [
+          {
+            "node": "3. Parse Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Parse Invoices": {
+      "main": [
+        [
+          {
+            "node": "4. Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Is Valid?": {
+      "main": [
+        [
+          {
+            "node": "5a. Rows to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5b. Exceptions to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5a. Rows to CSV": {
+      "main": [
+        [
+          {
+            "node": "6a. Write Table CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5b. Exceptions to CSV": {
+      "main": [
+        [
+          {
+            "node": "6b. Write Exceptions CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+}

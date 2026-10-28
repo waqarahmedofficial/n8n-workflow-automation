@@ -1,0 +1,117 @@
+{
+  "name": "SAMPLE - Order Filter FIXED",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## RESCUE DEMO \u2014 fixed\nSame workflow after the fix: ISO date parsing with a real calendar check, and the amount rule restored to >= threshold. Evidence: `evidence/exec-rescue-fixed.json`.",
+        "height": 200,
+        "width": 620,
+        "color": 4
+      },
+      "id": "d4a83d17-0927-4de2-b1ca-c4cd45479ac5",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orders-fixed",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "0f4d92ea-e2b9-4dcd-afcc-8a8df288be54",
+      "name": "Orders Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "61b7d7ca-77dd-4208-81ff-1dbd8ade2181"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CONFIG - the only place the business rule lives. Buyer edits here.\nreturn [{ json: { config: { minAmount: 100 } } }];"
+      },
+      "id": "6bda1db6-0af7-42b6-982f-48ff79eea75b",
+      "name": "1. Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FIXED LOGIC (changes vs the as-received version):\n// 1. Dates are parsed as ISO 8601 (YYYY-MM-DD) - the format the\n//    client's system actually sends - with a real calendar check.\n// 2. The amount rule keeps orders AT OR ABOVE the threshold\n//    (amount >= minAmount), as the business rule requires.\n// ============================================================\nconst cfg = $('1. Config').first().json.config;\nconst orders = ($('Orders Webhook').first().json.body || {}).orders || [];\nconst kept = [];\nfor (const o of orders) {\n  const m = String(o.orderDate || '').match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);\n  let dateValid = false;\n  if (m) {\n    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));\n    dateValid = !isNaN(d) && d.getUTCFullYear() === +m[1] && d.getUTCMonth() + 1 === +m[2] && d.getUTCDate() === +m[3];\n  }\n  if (dateValid && o.amount >= cfg.minAmount) kept.push({ json: Object.assign({}, o, { dateValid: true }) });\n}\nreturn kept;"
+      },
+      "id": "1fbd8154-9d57-4b53-aa5d-2044ec94be4a",
+      "name": "2. Parse and Filter - FIXED",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{ json: { keptCount: items.length, keptIds: items.map(i => i.json.orderId) } }];"
+      },
+      "id": "f22240a6-371e-4a01-9943-31a79ab257b6",
+      "name": "3. Run Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Orders Webhook": {
+      "main": [
+        [
+          {
+            "node": "1. Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Config": {
+      "main": [
+        [
+          {
+            "node": "2. Parse and Filter - FIXED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Parse and Filter - FIXED": {
+      "main": [
+        [
+          {
+            "node": "3. Run Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+}
